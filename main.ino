@@ -2,15 +2,16 @@ typedef bool COTE_MOTEUR;
 const COTE_MOTEUR DROITE = true;
 const COTE_MOTEUR GAUCHE = false;
 
-volatile bool cG, cD;
-volatile int mG, mD;
-volatile long int t = millis();
-volatile bool virage = false;
-volatile int maxMot = 255; //Valeur max de vitesse
-volatile int minMot = 70; //Vitesse minimale d'une roue lors d'un virage (évite le sur-place)
-volatile long int K = 10000;
+bool cG, cD;
+const int limite = 250;  //Valeur de référence
 
-const int limite = 250;   //Valeur de référence
+int mG, mD;
+long int t = millis();
+bool virage = false;
+bool arret = false;
+int maxMot = 255; 		//Valeur max de vitesse
+int minMot = 70; 		//Vitesse minimale d'une roue lors d'un virage (évite le sur-place)
+long int K = 10000;
 
 const int pinCapteurDroite = A0;
 const int pinCapteurGauche = A1;
@@ -18,10 +19,7 @@ const int pinCapteurGauche = A1;
 const int pinMoteursDroite = 3; // à changer
 const int pinMoteursGauche = 5; // à changer
 
-int debutVirage = 0;
-
 void setup() {
-	// put your setup code here, to run once:
 	pinMode (pinCapteurDroite, INPUT);  //Capteur gauche
 	pinMode (pinCapteurGauche, INPUT);  //Capteur droit
 	pinMode (pinMoteursDroite, OUTPUT); //Moteur gauche
@@ -29,13 +27,19 @@ void setup() {
 	Serial.begin(9600);
 }
 
-void commandeMoteurs(COTE_MOTEUR cote, int vitesse) {
-	int pinCommande = pinMoteursGauche;
-	if(cote == DROITE) pinCommande = pinMoteursDroite;
-	analogWrite(pinCommande, vitesse);
+int decelerationVirage() {
+	return floor(min(maxMot,max(minMot, K*maxMot/(millis()-t))));
+}
+
+int commencerVirage() {
+	virage = true;
+	t = millis() - 1;
 }
 
 void loop() {
+	if(arret) {
+		return;
+	}
     cG = analogRead(A0) < limite; //Ligne visible capteur gauche
     cD = analogRead(A1) < limite; //Ligne visible capteur droit
     Serial.print(mG);
@@ -47,37 +51,34 @@ void loop() {
     Serial.println(cD);
     if (cG == cD)
 	{
+		if(cG) {
 			mD = maxMot;
 			mG = maxMot;
-			virage = false;
-	}
-    else if (cG && !cD) //Ligne visible à gauche
-    {
-		if (!virage){
-			virage = true;
-			t = millis();
 		}
-		else
-		{
+		else {
+			mD = 0;
+			mG = 0;
+			arret = true;
+		}
+		virage = false;
+	}
+    else {
+    	if(!virage) {
+    		commencerVirage();
+    	}
+	    if (cG && !cD) {	//Ligne visible à gauche
 			mD = maxMot;
-			mG = floor(min(255,max(minMot, K*maxMot/(millis()-t))));    //à factoriser par un facteur K pour lisser
-			Serial.println( K*maxMot/(millis()-t));
-		}  
-	}
-    else
-    {             //Ligne visible à droite
-		if (!virage)
-		{
-			virage = true;
-			t = millis();
+			mG = decelerationVirage();   //à factoriser par un facteur K pour lisser
+			Serial.println( K*maxMot/(millis()-t));  
 		}
-		else
-		{
-          mG = maxMot;
-          mD = floor(min(255,max(minMot, K*maxMot/(millis()-t))));
-          Serial.println( K*maxMot/(millis()-t));
+	    else {             //Ligne visible à droite
+	        mG = maxMot;
+	        mD = decelerationVirage();
+	        Serial.println( K*maxMot/(millis()-t));
 		}
 	}
-    analogWrite(3, mG);
-    analogWrite(5, mD);
+    analogWrite(pinMoteursGauche, mG);
+    analogWrite(pinMoteursDroite, mD);
 }
+
+
