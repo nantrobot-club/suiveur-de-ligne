@@ -22,7 +22,8 @@ int minMot = 70;  // Tension pour une vitesse minimale applicable aux moteurs (p
 
 // Virage
 long int nbLoopEnVirage;  // Compteur d'itérations dans le virage.
-long int K = 100;  // Facteur de vitesse de desceleration en virage.
+long int k = 0.5;  // Facteur de vitesse de desceleration de la roue interieure en virage. Doit être à valeur dans ]0, 1[.
+// Plus il est eleve, plus la vitesse de desceleration de la roue interieure va etre grande, ete donc plus le robot va tourner fortement.
 
 void setup() {
 	pinMode(pinCapteurDroite, INPUT);  // Capteur gauche
@@ -38,7 +39,7 @@ int decelerationVirage() {
 			maxMot,
 			max(
 				minMot,
-				K * maxMot / nbLoopEnVirage
+				maxMot * (k / nbLoopEnVirage + (1 - k))
 			)
 		)
 	);
