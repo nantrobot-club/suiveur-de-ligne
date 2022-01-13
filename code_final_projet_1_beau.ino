@@ -4,7 +4,7 @@ int valMG, valMD;
 //volatile long int t = millis();
 //volatile bool virage = false;
 const int maxMot = 80; //Valeur max de vitesse en ligne droite
-const int minMot = 30; //Vitesse minimale d'une roue lors d'un virage (évite le sur-place)
+const int minMot = 20; //Vitesse minimale d'une roue lors d'un virage (évite le sur-place)
 
 int etat;
 
@@ -44,33 +44,38 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(analogRead(capteurGauche));
+  //Serial.println(analogRead(capteurGauche));
   
-  detectionG = analogRead(capteurGauche) > limiteCapteur; //Ligne visible capteur gauche
-  detectionD = analogRead(capteurDroit) > limiteCapteur; //Ligne visible capteur droit
+  detectionG = analogRead(capteurGauche) < limiteCapteur; //Ligne visible capteur gauche
+  detectionD = analogRead(capteurDroit) < limiteCapteur; //Ligne visible capteur droit
 
   
 //pour afficher les valeurs : 
   
-//    Serial.print(mG);
-//    Serial.print(" ");
-//    Serial.print(mD);
-//    Serial.print(" : ");
-//    Serial.print(detectionG);
-//    Serial.print(" ");
-//    Serial.println(detectionD);
+    Serial.print("CG ");
+    Serial.print(analogRead(capteurGauche));
+    Serial.print("CD ");
+    Serial.print(analogRead(capteurDroit));
+    Serial.print(" : ");
+    Serial.print(detectionG);
+    Serial.print(" ");
+    Serial.print(detectionD);
+    Serial.print(" ");
+    Serial.print(valMG);
+    Serial.print(" ");
+    Serial.println(valMD);
 //
 
 
-  if (detectionG && !detectionD)
+  if (!detectionG && detectionD)
   {
       etat = tournerAGauche;
   }
-  else if(detectionD && !detectionG)
+  else if(!detectionD && detectionG)
   {
       etat = tournerADroite;
   }
-  else if( detectionD && detectionG)
+  else if( !detectionD && !detectionG)
   {
       etat = toutDroit;
   }
