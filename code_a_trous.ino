@@ -28,7 +28,7 @@ const int IN3 = 11;
 const int IN1 = 12;
 
 
-void initPontEnH{
+void initPontEnH(){
     // NE PAS TOUCHER
     pinMode (IN4,OUTPUT);
     digitalWrite(IN4,LOW);
